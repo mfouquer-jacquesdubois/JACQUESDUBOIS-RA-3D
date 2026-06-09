@@ -7,180 +7,102 @@
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0e0e14;
-      color: #e8e8e8;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      background: #0e0e14; color: #e8e8e8;
+      min-height: 100vh; display: flex; flex-direction: column;
     }
-
     header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      display: flex; align-items: center; gap: 12px;
       padding: 1rem 1.25rem;
       border-bottom: 0.5px solid rgba(255,255,255,0.08);
-      background: #0e0e14;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      background: #0e0e14; position: sticky; top: 0; z-index: 10;
     }
-
     .logo-mark {
-      width: 32px; height: 32px;
-      background: #4a5cff;
-      border-radius: 6px;
+      width: 32px; height: 32px; background: #4a5cff; border-radius: 6px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700; color: #fff;
-      letter-spacing: -0.5px; flex-shrink: 0;
+      font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
     }
-
     header h1 { font-size: 15px; font-weight: 500; color: #e8e8e8; }
-    header span { font-size: 12px; color: #666; margin-left: auto; }
-
+    .version { font-size: 11px; color: #4a5cff; background: rgba(74,92,255,0.12); padding: 2px 8px; border-radius: 4px; margin-left: auto; }
     main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 1.25rem;
-      gap: 1rem;
-      max-width: 640px;
-      width: 100%;
-      margin: 0 auto;
+      flex: 1; display: flex; flex-direction: column;
+      padding: 1.25rem; gap: 1rem;
+      max-width: 640px; width: 100%; margin: 0 auto;
     }
 
-    #drop-zone {
-      border: 1.5px dashed rgba(74, 92, 255, 0.4);
-      border-radius: 12px;
-      padding: 2.5rem 1rem;
-      text-align: center;
-      cursor: pointer;
+    /* Sélecteur — label wrapping input, iOS-safe */
+    #drop-label {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border: 1.5px dashed rgba(74,92,255,0.4); border-radius: 12px;
+      padding: 2.5rem 1rem; text-align: center; cursor: pointer;
+      background: rgba(74,92,255,0.04);
       transition: border-color 0.2s, background 0.2s;
-      background: rgba(74, 92, 255, 0.04);
     }
-    #drop-zone:hover { border-color: #4a5cff; background: rgba(74, 92, 255, 0.08); }
-    #drop-zone svg { width: 36px; height: 36px; stroke: #4a5cff; margin-bottom: 12px; }
-    #drop-zone p { font-size: 15px; color: #c0c0c0; margin-bottom: 4px; }
-    #drop-zone small { font-size: 12px; color: #555; }
-    #file-input { display: none; }
+    #drop-label:hover, #drop-label:active { border-color: #4a5cff; background: rgba(74,92,255,0.08); }
+    #drop-label svg { width: 36px; height: 36px; stroke: #4a5cff; margin-bottom: 12px; }
+    #drop-label p { font-size: 15px; color: #c0c0c0; margin-bottom: 4px; pointer-events: none; }
+    #drop-label small { font-size: 12px; color: #555; pointer-events: none; }
+    #file-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
     #file-info {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,0.04);
-      border: 0.5px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      padding: 0.75rem 1rem;
+      display: none; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 0.75rem 1rem;
     }
     #file-info svg { width: 20px; height: 20px; stroke: #4a5cff; flex-shrink: 0; }
     #file-name { font-size: 14px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #file-size { font-size: 12px; color: #666; flex-shrink: 0; }
-    #change-btn {
-      background: none;
-      border: 0.5px solid rgba(255,255,255,0.15);
-      border-radius: 6px;
-      color: #999;
-      font-size: 12px;
-      padding: 4px 10px;
-      cursor: pointer;
-      flex-shrink: 0;
+
+    /* Changer = label aussi */
+    #change-label {
+      background: none; border: 0.5px solid rgba(255,255,255,0.15);
+      border-radius: 6px; color: #999; font-size: 12px;
+      padding: 4px 10px; cursor: pointer; flex-shrink: 0;
+      display: inline-block;
     }
-    #change-btn:hover { color: #e8e8e8; }
+    #change-label:hover { color: #e8e8e8; }
+    #file-input2 { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
     #viewer-wrap {
-      display: none;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #16161f;
-      border: 0.5px solid rgba(255,255,255,0.06);
+      display: none; border-radius: 12px; overflow: hidden;
+      background: #16161f; border: 0.5px solid rgba(255,255,255,0.06);
     }
-
     model-viewer {
-      width: 100%;
-      height: 70vw;
-      max-height: 480px;
-      min-height: 260px;
-      --progress-bar-color: #4a5cff;
-      --progress-mask: none;
+      width: 100%; height: 70vw; max-height: 480px; min-height: 260px;
+      --progress-bar-color: #4a5cff; --progress-mask: none;
     }
-
     .viewer-controls { display: none; gap: 8px; }
-
     .ctrl-btn {
-      flex: 1;
-      padding: 0.6rem;
-      background: rgba(255,255,255,0.04);
-      border: 0.5px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      color: #999;
-      font-size: 13px;
-      cursor: pointer;
-      text-align: center;
-      transition: color 0.15s, background 0.15s;
+      flex: 1; padding: 0.6rem;
+      background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 8px; color: #999; font-size: 13px; cursor: pointer; text-align: center;
     }
     .ctrl-btn:hover { background: rgba(255,255,255,0.08); color: #e8e8e8; }
     .ctrl-btn.active { color: #4a5cff; border-color: #4a5cff; background: rgba(74,92,255,0.08); }
-
     .hint-row { display: none; gap: 8px; justify-content: center; flex-wrap: wrap; }
     .hint {
       font-size: 11px; color: #444;
-      background: rgba(255,255,255,0.03);
-      border: 0.5px solid rgba(255,255,255,0.07);
-      border-radius: 6px;
-      padding: 4px 10px;
+      background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.07);
+      border-radius: 6px; padding: 4px 10px;
     }
-
-    /* Échelle AR */
-    .scale-row {
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .scale-label {
-      font-size: 12px;
-      color: #555;
-      display: flex;
-      justify-content: space-between;
-    }
+    .scale-row { display: none; flex-direction: column; gap: 6px; }
+    .scale-label { font-size: 12px; color: #555; display: flex; justify-content: space-between; }
     .scale-label span { color: #4a5cff; font-weight: 500; }
-    input[type=range] {
-      width: 100%;
-      accent-color: #4a5cff;
-    }
-
+    .scale-ends { font-size: 10px; color: #333; display: flex; justify-content: space-between; }
+    input[type=range] { width: 100%; accent-color: #4a5cff; }
     #ar-btn {
-      display: none;
-      width: 100%;
-      padding: 0.9rem;
-      background: #4a5cff;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: background 0.15s, transform 0.1s;
+      display: none; width: 100%; padding: 0.9rem;
+      background: #4a5cff; color: #fff; border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 500; cursor: pointer;
+      align-items: center; justify-content: center; gap: 10px;
     }
-    #ar-btn:hover { background: #3a4cef; }
     #ar-btn:active { transform: scale(0.98); }
     #ar-btn svg { width: 20px; height: 20px; stroke: #fff; flex-shrink: 0; }
-
     #no-ar { display: none; text-align: center; font-size: 13px; color: #666; padding: 0.5rem; }
-    .instructions { display: none; }
-    .instructions p { font-size: 12px; color: #555; text-align: center; }
-
+    #instructions { display: none; font-size: 12px; color: #555; text-align: center; }
     footer {
-      text-align: center;
-      padding: 1.25rem;
-      font-size: 11px;
-      color: #333;
+      text-align: center; padding: 1.25rem; font-size: 11px; color: #333;
       border-top: 0.5px solid rgba(255,255,255,0.05);
     }
   </style>
@@ -190,12 +112,13 @@
 <header>
   <div class="logo-mark">JD</div>
   <h1>AR Viewer</h1>
-  <span>Jacques Dubois</span>
+  <span class="version">v4</span>
 </header>
 
 <main>
 
-  <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+  <!-- Sélecteur iOS-safe : label wraps input -->
+  <label id="drop-label" for="file-input">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
       <polyline points="17 8 12 3 7 8"/>
@@ -203,8 +126,8 @@
     </svg>
     <p>Appuyer pour charger un fichier</p>
     <small>.glb · .gltf</small>
-    <input type="file" id="file-input" accept=".glb,.gltf" />
-  </div>
+  </label>
+  <input type="file" id="file-input" accept=".glb,.gltf" onchange="loadFile(this.files[0])" />
 
   <div id="file-info">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -214,7 +137,8 @@
     </svg>
     <span id="file-name">—</span>
     <span id="file-size"></span>
-    <button id="change-btn">Changer</button>
+    <label id="change-label" for="file-input2">Changer</label>
+    <input type="file" id="file-input2" accept=".glb,.gltf" onchange="loadFile(this.files[0])" />
   </div>
 
   <div id="viewer-wrap">
@@ -224,7 +148,8 @@
       auto-rotate
       ar
       ar-modes="webxr scene-viewer quick-look"
-      ar-scale="auto"
+      ar-scale="fixed"
+      ar-placement="floor"
       shadow-intensity="1"
       environment-image="neutral"
       exposure="1"
@@ -244,17 +169,16 @@
   </div>
 
   <div class="scale-row" id="scale-row">
-    <div class="scale-label">Échelle AR <span id="scale-val">1.0×</span></div>
-    <input type="range" id="scale-slider" min="0.01" max="2" step="0.01" value="1"
-      oninput="onScale(this.value)" />
-    <div class="scale-label" style="font-size:10px;">
-      <span style="color:#333;">Mini (0.01×)</span>
-      <span style="color:#333;">Taille réelle (1×)</span>
-      <span style="color:#333;">Double (2×)</span>
+    <div class="scale-label">Échelle AR <span id="scale-val">1.000×</span></div>
+    <input type="range" id="scale-slider" min="0.001" max="2" step="0.001" value="1" oninput="onScale(this.value)" />
+    <div class="scale-ends">
+      <span>0.001× (mm→m)</span>
+      <span>1× (réel)</span>
+      <span>2×</span>
     </div>
   </div>
 
-  <button id="ar-btn">
+  <button id="ar-btn" onclick="document.getElementById('mv').activateAR()">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
       <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
@@ -268,85 +192,65 @@
   </button>
 
   <div id="no-ar">La réalité augmentée n'est pas disponible sur cet appareil.<br>Utilisez un iPhone (iOS 12+) ou un Android compatible ARCore.</div>
-
-  <div class="instructions" id="instructions">
-    <p>Pointez la caméra vers le sol pour placer le modèle.</p>
-  </div>
+  <p id="instructions">Pointez vers le sol et bougez lentement pour scanner la surface, puis tapez pour poser le modèle.</p>
 
 </main>
 
 <footer>Jacques Dubois · Visualiseur AR interne</footer>
 
 <script>
-  const dropZone = document.getElementById('drop-zone');
-  const fileInput = document.getElementById('file-input');
-  const fileInfo = document.getElementById('file-info');
-  const fileName = document.getElementById('file-name');
-  const fileSize = document.getElementById('file-size');
-  const changeBtn = document.getElementById('change-btn');
-  const viewerWrap = document.getElementById('viewer-wrap');
-  const mv = document.getElementById('mv');
-  const arBtn = document.getElementById('ar-btn');
-  const noAr = document.getElementById('no-ar');
-  const instructions = document.getElementById('instructions');
-  const viewerControls = document.getElementById('viewer-controls');
-  const hintRow = document.getElementById('hint-row');
-  const scaleRow = document.getElementById('scale-row');
-  const btnRotate = document.getElementById('btn-rotate');
   let autoRotateOn = true;
   let objectUrl = null;
 
-  dropZone.addEventListener('click', () => fileInput.click());
-  changeBtn.addEventListener('click', () => fileInput.click());
-
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) loadFile(fileInput.files[0]);
-  });
-
   function loadFile(file) {
+    if (!file) return;
     if (objectUrl) URL.revokeObjectURL(objectUrl);
     objectUrl = URL.createObjectURL(file);
-    fileName.textContent = file.name;
-    fileSize.textContent = formatSize(file.size);
+
+    const mv = document.getElementById('mv');
     mv.src = objectUrl;
 
-    dropZone.style.display = 'none';
-    fileInfo.style.display = 'flex';
-    viewerWrap.style.display = 'block';
-    viewerControls.style.display = 'flex';
-    hintRow.style.display = 'flex';
-    scaleRow.style.display = 'flex';
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = formatSize(file.size);
+
+    document.getElementById('drop-label').style.display = 'none';
+    document.getElementById('file-info').style.display = 'flex';
+    document.getElementById('viewer-wrap').style.display = 'block';
+    document.getElementById('viewer-controls').style.display = 'flex';
+    document.getElementById('hint-row').style.display = 'flex';
+    document.getElementById('scale-row').style.display = 'flex';
 
     mv.addEventListener('load', () => {
       if (mv.canActivateAR) {
-        arBtn.style.display = 'flex';
-        instructions.style.display = 'flex';
-        noAr.style.display = 'none';
+        document.getElementById('ar-btn').style.display = 'flex';
+        document.getElementById('instructions').style.display = 'block';
+        document.getElementById('no-ar').style.display = 'none';
       } else {
-        arBtn.style.display = 'none';
-        noAr.style.display = 'block';
+        document.getElementById('ar-btn').style.display = 'none';
+        document.getElementById('no-ar').style.display = 'block';
       }
     }, { once: true });
   }
 
-  arBtn.addEventListener('click', () => mv.activateAR());
-
   function onScale(val) {
     const v = parseFloat(val);
-    document.getElementById('scale-val').textContent = v.toFixed(2) + '×';
+    document.getElementById('scale-val').textContent = v.toFixed(3) + '×';
+    const mv = document.getElementById('mv');
     mv.scale = v + ' ' + v + ' ' + v;
   }
 
   function toggleAutoRotate() {
     autoRotateOn = !autoRotateOn;
+    const mv = document.getElementById('mv');
     mv.autoRotate = autoRotateOn;
-    btnRotate.classList.toggle('active', autoRotateOn);
+    document.getElementById('btn-rotate').classList.toggle('active', autoRotateOn);
   }
 
   function resetCamera() {
-    mv.cameraOrbit = 'auto auto auto';
+    const mv = document.getElementById('mv');
+    mv.cameraOrbit  = 'auto auto auto';
     mv.cameraTarget = 'auto auto auto';
-    mv.fieldOfView = 'auto';
+    mv.fieldOfView  = 'auto';
   }
 
   function formatSize(bytes) {
